@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         text: text.trim(),
-        model_id: "eleven_turbo_v2_5",
+        model_id: "eleven_v3",
         language_code: "af",
       }),
     });
