@@ -4,18 +4,17 @@ import { useState, useRef, useCallback } from 'react';
 
 const AUDIO_TAGS = {
   'Emotions': [
-    '[excited]', '[nervous]', '[frustrated]', '[sorrowful]', '[calm]',
-    '[sarcastic]', '[curious]', '[awe]', '[wistful]', '[resigned]',
+    '[excited]', '[sarcastic]', '[curious]', '[crying]', '[mischievously]',
   ],
   'Delivery': [
-    '[whispers]', '[shouting]', '[softly]', '[dramatic tone]',
-    '[lighthearted]', '[serious tone]', '[matter-of-fact]', '[reflective]',
+    '[whispers]', '[sighs]', '[exhales]', '[muttering]', '[clears throat]',
   ],
   'Reactions': [
-    '[laughs]', '[sighs]', '[gasps]', '[gulps]', '[exhales]', '[crying]',
+    '[laughs]', '[laughs harder]', '[starts laughing]', '[wheezing]',
+    '[snorts]', '[chuckles]',
   ],
-  'Pacing': [
-    '[pause]', '[hesitates]', '[slows down]', '[rushed]', '[emphasized]',
+  'Sounds': [
+    '[gulps]', '[swallows]', '[applause]', '[clapping]',
   ],
 } as const;
 
