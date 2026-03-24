@@ -4,8 +4,6 @@ import { useState, useRef, useCallback } from 'react';
 
 const VOICES = [
   { id: 'ZIGffU92feoE7QFrof7N', name: 'Liam Callahan', desc: 'Narrative, American Male' },
-  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', desc: 'Warm Storyteller, British Male' },
-  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', desc: 'Steady Broadcaster, British Male' },
   { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Mature & Confident, American Female' },
   { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', desc: 'Velvety Actress, British Female' },
   { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', desc: 'Laid-Back & Casual, American Male' },
