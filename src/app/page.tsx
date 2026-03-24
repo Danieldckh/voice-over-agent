@@ -2,11 +2,29 @@
 
 import { useState, useRef, useCallback } from 'react';
 
+const AUDIO_TAGS = {
+  'Emotions': [
+    '[excited]', '[nervous]', '[frustrated]', '[sorrowful]', '[calm]',
+    '[sarcastic]', '[curious]', '[awe]', '[wistful]', '[resigned]',
+  ],
+  'Delivery': [
+    '[whispers]', '[shouting]', '[softly]', '[dramatic tone]',
+    '[lighthearted]', '[serious tone]', '[matter-of-fact]', '[reflective]',
+  ],
+  'Reactions': [
+    '[laughs]', '[sighs]', '[gasps]', '[gulps]', '[exhales]', '[crying]',
+  ],
+  'Pacing': [
+    '[pause]', '[hesitates]', '[slows down]', '[rushed]', '[emphasized]',
+  ],
+} as const;
+
 export default function Home() {
   const [scriptText, setScriptText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleFileUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +97,26 @@ export default function Home() {
     }
   }, [scriptText]);
 
+  const insertTag = useCallback((tag: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setScriptText((prev) => prev + ' ' + tag + ' ');
+      return;
+    }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = scriptText.slice(0, start);
+    const after = scriptText.slice(end);
+    const inserted = before + tag + ' ' + after;
+    setScriptText(inserted);
+    // Restore cursor after the tag
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const pos = start + tag.length + 1;
+      textarea.setSelectionRange(pos, pos);
+    });
+  }, [scriptText]);
+
   const charCount = scriptText.length;
 
   return (
@@ -119,6 +157,7 @@ export default function Home() {
           </label>
           <textarea
             id="script"
+            ref={textareaRef}
             rows={10}
             placeholder="Enter your voice-over script here..."
             value={scriptText}
@@ -129,6 +168,29 @@ export default function Home() {
             disabled={isGenerating}
             className="w-full resize-y rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 transition-colors focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
           />
+
+          {/* Audio Tags */}
+          <div className="mt-4 space-y-3">
+            <p className="text-xs font-medium text-zinc-400">Voice Inflections <span className="text-zinc-600">— click to insert at cursor</span></p>
+            {Object.entries(AUDIO_TAGS).map(([category, tags]) => (
+              <div key={category}>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{category}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => insertTag(tag)}
+                      disabled={isGenerating}
+                      className="rounded-md border border-zinc-700 bg-zinc-800/60 px-2.5 py-1 text-[11px] font-mono text-zinc-300 transition-all hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-300 disabled:opacity-50"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
 
           {/* Controls row */}
           <div className="mt-3 flex items-center justify-between">
