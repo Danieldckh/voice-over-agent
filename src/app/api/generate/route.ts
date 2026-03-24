@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { text } = body;
+    const { text, voiceId } = body;
 
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json(
@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const voiceId = "ZIGffU92feoE7QFrof7N";
-    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
+    const selectedVoice = voiceId || "ZIGffU92feoE7QFrof7N";
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(selectedVoice)}?output_format=mp3_44100_128`;
 
     const response = await fetch(url, {
       method: "POST",

@@ -2,6 +2,19 @@
 
 import { useState, useRef, useCallback } from 'react';
 
+const VOICES = [
+  { id: 'ZIGffU92feoE7QFrof7N', name: 'Liam Callahan', desc: 'Narrative, American Male' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', desc: 'Warm Storyteller, British Male' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', desc: 'Steady Broadcaster, British Male' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Mature & Confident, American Female' },
+  { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', desc: 'Velvety Actress, British Female' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', desc: 'Laid-Back & Casual, American Male' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', desc: 'Deep & Resonant, American Male' },
+  { id: 'SAz9YHcvj6GT2YYXdXww', name: 'River', desc: 'Relaxed & Neutral, American' },
+  { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', desc: 'Clear Educator, British Female' },
+  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', desc: 'Deep & Confident, Australian Male' },
+] as const;
+
 const AUDIO_TAGS = {
   'Emotions': [
     '[excited]', '[sarcastic]', '[curious]', '[crying]', '[mischievously]',
@@ -20,6 +33,7 @@ const AUDIO_TAGS = {
 
 export default function Home() {
   const [scriptText, setScriptText] = useState('');
+  const [voiceId, setVoiceId] = useState<string>(VOICES[0].id);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTags, setShowTags] = useState(false);
@@ -69,7 +83,7 @@ export default function Home() {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: trimmed }),
+        body: JSON.stringify({ text: trimmed, voiceId }),
       });
 
       if (!response.ok) {
@@ -95,7 +109,7 @@ export default function Home() {
     } finally {
       setIsGenerating(false);
     }
-  }, [scriptText]);
+  }, [scriptText, voiceId]);
 
   const insertTag = useCallback((tag: string) => {
     const textarea = textareaRef.current;
@@ -148,6 +162,27 @@ export default function Home() {
       {/* Main card */}
       <main className="w-full max-w-2xl">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 shadow-2xl backdrop-blur-sm sm:p-8">
+          {/* Voice selector */}
+          <label
+            htmlFor="voice"
+            className="mb-2 block text-sm font-medium text-zinc-300"
+          >
+            Voice
+          </label>
+          <select
+            id="voice"
+            value={voiceId}
+            onChange={(e) => setVoiceId(e.target.value)}
+            disabled={isGenerating}
+            className="mb-5 w-full rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-2.5 text-sm text-zinc-100 transition-colors focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+          >
+            {VOICES.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name} — {v.desc}
+              </option>
+            ))}
+          </select>
+
           {/* Script input area */}
           <label
             htmlFor="script"
