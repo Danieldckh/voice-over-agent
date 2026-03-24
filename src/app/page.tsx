@@ -22,6 +22,7 @@ export default function Home() {
   const [scriptText, setScriptText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTags, setShowTags] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -169,8 +170,24 @@ export default function Home() {
           />
 
           {/* Audio Tags */}
-          <div className="mt-4 space-y-3">
-            <p className="text-xs font-medium text-zinc-400">Voice Inflections <span className="text-zinc-600">— click to insert at cursor</span></p>
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setShowTags((v) => !v)}
+              disabled={isGenerating}
+              className="flex items-center gap-1.5 text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200 disabled:opacity-50"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className={`h-3.5 w-3.5 transition-transform ${showTags ? 'rotate-90' : ''}`}
+              >
+                <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+              </svg>
+              Voice Inflections {showTags && <span className="text-zinc-600">— click to insert at cursor</span>}
+            </button>
+          {showTags && <div className="mt-3 space-y-3">
             {Object.entries(AUDIO_TAGS).map(([category, tags]) => (
               <div key={category}>
                 <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{category}</p>
@@ -189,6 +206,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>}
           </div>
 
           {/* Controls row */}
