@@ -30,3 +30,38 @@ body {
 .animate-slide {
   animation: slide 1.5s ease-in-out infinite;
 }
+
+/* Pronunciation highlight overlay */
+.script-container {
+  position: relative;
+}
+
+.script-backdrop {
+  font-family: inherit;
+  font-size: inherit;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.script-textarea {
+  background: transparent !important;
+  caret-color: #e4e4e7;
+}
+
+.script-textarea::placeholder {
+  color: #71717a;
+}
+
+/* Backdrop needs same bg as original textarea */
+.script-backdrop {
+  background: rgb(39 39 42 / 0.8);
+  border-radius: 0.75rem;
+}
+
+mark.pron-mark {
+  background: rgb(139 92 246 / 0.25);
+  color: transparent;
+  border-radius: 2px;
+  padding: 1px 0;
+  border-bottom: 2px solid rgb(139 92 246 / 0.6);
+}

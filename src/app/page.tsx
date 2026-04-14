@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 const VOICES = [
   { id: 'ZIGffU92feoE7QFrof7N', name: 'Liam Callahan', desc: 'Narrative, American Male' },
@@ -47,20 +47,34 @@ const CMU_CONSONANTS = ['B','CH','D','DH','F','G','HH','JH','K','L','M','N','NG'
 const CMU_VOWELS = ['AA','AE','AH','AO','AW','AY','EH','ER','EY','IH','IY','OW','OY','UH','UW'];
 const CMU_STRESS = ['0','1','2'];
 
-interface Pronunciation {
-  word: string;
-  phonemes: string;
-  fullMatch: string;
+function escapeHtml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function parsePronunciations(text: string): Pronunciation[] {
-  const regex = /<phoneme\s+alphabet="cmu-arpabet"\s+ph="([^"]*)">(.*?)<\/phoneme>/g;
-  const results: Pronunciation[] = [];
+function buildHighlightHtml(text: string, pronMap: Map<string, string>): string {
+  if (pronMap.size === 0) return escapeHtml(text) + '\n';
+  const words = Array.from(pronMap.keys()).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const regex = new RegExp(`\\b(${words.join('|')})\\b`, 'gi');
+  let result = '';
+  let last = 0;
   let match;
   while ((match = regex.exec(text)) !== null) {
-    results.push({ word: match[2], phonemes: match[1], fullMatch: match[0] });
+    result += escapeHtml(text.slice(last, match.index));
+    result += `<mark class="pron-mark">${escapeHtml(match[0])}</mark>`;
+    last = match.index + match[0].length;
   }
-  return results;
+  result += escapeHtml(text.slice(last));
+  return result + '\n';
+}
+
+function injectPhonemes(text: string, pronMap: Map<string, string>): string {
+  if (pronMap.size === 0) return text;
+  const words = Array.from(pronMap.keys()).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const regex = new RegExp(`\\b(${words.join('|')})\\b`, 'gi');
+  return text.replace(regex, (m) => {
+    const ph = pronMap.get(m) || pronMap.get(m.toLowerCase());
+    return ph ? `<phoneme alphabet="cmu-arpabet" ph="${ph}">${m}</phoneme>` : m;
+  });
 }
 
 export default function Home() {
@@ -74,12 +88,11 @@ export default function Home() {
   const [showPronunciationModal, setShowPronunciationModal] = useState(false);
   const [pronSelectedWord, setPronSelectedWord] = useState('');
   const [pronPhonemes, setPronPhonemes] = useState('');
-  const [pronSelectionRange, setPronSelectionRange] = useState<[number, number]>([0, 0]);
   const [pronError, setPronError] = useState<string | null>(null);
+  const [pronMap, setPronMap] = useState<Map<string, string>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const pronunciations = useMemo(() => parsePronunciations(scriptText), [scriptText]);
+  const backdropRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,10 +134,11 @@ export default function Home() {
     setError(null);
 
     try {
+      const finalText = injectPhonemes(trimmed, pronMap);
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: trimmed, voiceId, speed, stability }),
+        body: JSON.stringify({ text: finalText, voiceId, speed, stability }),
       });
 
       if (!response.ok) {
@@ -184,22 +198,24 @@ export default function Home() {
     }
     const selected = scriptText.slice(start, end).trim();
     setPronSelectedWord(selected);
-    setPronPhonemes('');
-    setPronSelectionRange([start, end]);
+    setPronPhonemes(pronMap.get(selected) || '');
     setShowPronunciationModal(true);
-  }, [scriptText]);
+  }, [scriptText, pronMap]);
 
   const handleApplyPronunciation = useCallback(() => {
     if (!pronPhonemes.trim()) return;
-    const [start, end] = pronSelectionRange;
-    const tag = `<phoneme alphabet="cmu-arpabet" ph="${pronPhonemes.trim()}">${pronSelectedWord}</phoneme>`;
-    const newText = scriptText.slice(0, start) + tag + scriptText.slice(end);
-    setScriptText(newText);
+    setPronMap(prev => new Map(prev).set(pronSelectedWord, pronPhonemes.trim()));
     setShowPronunciationModal(false);
-  }, [pronPhonemes, pronSelectedWord, pronSelectionRange, scriptText]);
+  }, [pronPhonemes, pronSelectedWord]);
 
-  const handleRemovePronunciation = useCallback((pron: Pronunciation) => {
-    setScriptText((prev) => prev.replace(pron.fullMatch, pron.word));
+  const handleRemovePronunciation = useCallback((word: string) => {
+    setPronMap(prev => { const n = new Map(prev); n.delete(word); return n; });
+  }, []);
+
+  const handleSyncScroll = useCallback(() => {
+    if (textareaRef.current && backdropRef.current) {
+      backdropRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
   }, []);
 
   const charCount = scriptText.length;
@@ -311,26 +327,35 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Script input area */}
+          {/* Script input area with pronunciation highlight overlay */}
           <label
             htmlFor="script"
             className="mb-2 block text-sm font-medium text-zinc-300"
           >
             Script
           </label>
-          <textarea
-            id="script"
-            ref={textareaRef}
-            rows={10}
-            placeholder="Enter your voice-over script here..."
-            value={scriptText}
-            onChange={(e) => {
-              setScriptText(e.target.value);
-              if (error) setError(null);
-            }}
-            disabled={isGenerating}
-            className="w-full resize-y rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 transition-colors focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
-          />
+          <div className="script-container relative">
+            <div
+              ref={backdropRef}
+              className="script-backdrop pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-transparent px-4 py-3 text-sm leading-relaxed text-transparent"
+              aria-hidden="true"
+              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(scriptText, pronMap) }}
+            />
+            <textarea
+              id="script"
+              ref={textareaRef}
+              rows={10}
+              placeholder="Enter your voice-over script here..."
+              value={scriptText}
+              onChange={(e) => {
+                setScriptText(e.target.value);
+                if (error) setError(null);
+              }}
+              onScroll={handleSyncScroll}
+              disabled={isGenerating}
+              className="script-textarea relative w-full resize-y rounded-xl border border-zinc-700 bg-transparent px-4 py-3 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 transition-colors focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+            />
+          </div>
 
           {/* Audio Tags */}
           <div className="mt-4">
@@ -477,19 +502,19 @@ export default function Home() {
           )}
 
           {/* Pronunciation overrides list */}
-          {pronunciations.length > 0 && (
+          {pronMap.size > 0 && (
             <div className="mt-4">
               <p className="mb-2 text-xs font-medium text-zinc-400">Pronunciation Overrides</p>
               <div className="space-y-1.5">
-                {pronunciations.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-md border border-zinc-700/50 bg-zinc-800/40 px-3 py-1.5">
+                {Array.from(pronMap.entries()).map(([word, phonemes]) => (
+                  <div key={word} className="flex items-center justify-between rounded-md border border-zinc-700/50 bg-zinc-800/40 px-3 py-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-zinc-200">{p.word}</span>
-                      <span className="font-mono text-[11px] text-violet-400">{p.phonemes}</span>
+                      <span className="text-xs font-medium text-violet-300">{word}</span>
+                      <span className="font-mono text-[11px] text-zinc-400">{phonemes}</span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleRemovePronunciation(p)}
+                      onClick={() => handleRemovePronunciation(word)}
                       className="text-zinc-500 transition-colors hover:text-red-400"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
