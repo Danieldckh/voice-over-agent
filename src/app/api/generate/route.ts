@@ -3,7 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { text, voiceId } = body;
+    const { text, voiceId, speed, stability: stabilityPreset } = body;
+
+    const stabilityMap: Record<string, number> = {
+      creative: 0.20,
+      natural: 0.35,
+      robust: 0.75,
+    };
+    const stabilityValue = stabilityMap[stabilityPreset] ?? 0.35;
 
     if (!text || typeof text !== "string" || text.trim().length === 0) {
       return NextResponse.json(
@@ -32,7 +39,13 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         text: text.trim(),
         model_id: "eleven_v3",
-        language_code: "af",
+        voice_settings: {
+          stability: stabilityValue,
+          similarity_boost: 0.80,
+          style: stabilityPreset === "robust" ? 0.10 : 0.40,
+          use_speaker_boost: true,
+          speed: typeof speed === "number" && speed > 0 ? speed : 1.1,
+        },
       }),
     });
 

@@ -11,7 +11,10 @@ const sections = [
   { id: 'overview', label: 'Overview' },
   { id: 'quick-start', label: 'Quick Start' },
   { id: 'voices', label: 'Voices & Settings' },
+  { id: 'stability', label: 'Stability Presets' },
   { id: 'delivery', label: 'Delivery Control' },
+  { id: 'break-times', label: 'Break Times & Pauses' },
+  { id: 'multi-speaker', label: 'Multi-Speaker Dialogue' },
   { id: 'pronunciation', label: 'Pronunciation (CMU)' },
   { id: 'dictionaries', label: 'Pronunciation Dictionaries' },
   { id: 'normalization', label: 'Text Normalization' },
@@ -154,6 +157,57 @@ export default function DocsPage() {
             </div>
           </section>
 
+          {/* ═══ Stability Presets ═══ */}
+          <section id="stability" className="mb-14">
+            <h2 className="mb-4 text-xl font-semibold text-white">Stability Presets</h2>
+            <p className="mb-4 text-sm text-zinc-300">
+              The <strong className="text-white">Stability</strong> setting is the most important control in the Voice Over Agent.
+              It determines how closely the generated voice follows the original reference audio.
+            </p>
+            <div className="mb-6 overflow-hidden rounded-xl border border-zinc-800">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-zinc-800 bg-zinc-900/50"><th className="px-4 py-2.5 text-left font-medium text-zinc-400">Preset</th><th className="px-4 py-2.5 text-left font-medium text-zinc-400">Behavior</th><th className="px-4 py-2.5 text-left font-medium text-zinc-400">Best For</th></tr></thead>
+                <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                  <tr>
+                    <td className="px-4 py-2.5"><span className="rounded bg-violet-500/20 px-2 py-0.5 text-xs font-semibold text-violet-300">Creative</span></td>
+                    <td className="px-4 py-2.5 text-zinc-400">More emotional and expressive, but prone to hallucinations</td>
+                    <td className="px-4 py-2.5 text-zinc-400">Dramatic reads, storytelling, character voices</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5"><span className="rounded bg-violet-500/20 px-2 py-0.5 text-xs font-semibold text-violet-300">Natural</span></td>
+                    <td className="px-4 py-2.5 text-zinc-400">Closest to the original voice recording &mdash; balanced and neutral</td>
+                    <td className="px-4 py-2.5 text-zinc-400">General narration, promos, most use cases (default)</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5"><span className="rounded bg-violet-500/20 px-2 py-0.5 text-xs font-semibold text-violet-300">Robust</span></td>
+                    <td className="px-4 py-2.5 text-zinc-400">Highly stable but less responsive to directional prompts &mdash; consistent output</td>
+                    <td className="px-4 py-2.5 text-zinc-400">Corporate, legal, long-form where consistency matters</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">How Stability Affects Audio Tags</h3>
+            <p className="mb-3 text-sm text-zinc-300">
+              For maximum expressiveness with audio tags (like <Code>{`[excited]`}</Code> or <Code>{`[whispers]`}</Code>),
+              use <strong className="text-white">Creative</strong> or <strong className="text-white">Natural</strong>.
+              Robust reduces responsiveness to these directional prompts.
+            </p>
+
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Neutral Voices + Stability</h3>
+            <p className="mb-3 text-sm text-zinc-300">
+              Neutral voices (like <strong className="text-white">River</strong> or <strong className="text-white">Alice</strong>)
+              tend to be more stable across languages and styles, providing reliable baseline performance.
+              Pairing a neutral voice with <strong className="text-white">Natural</strong> stability gives you a dependable
+              foundation without sacrificing moderate expressiveness.
+            </p>
+            <ul className="space-y-1.5 text-sm text-zinc-300">
+              <li>&bull; <strong className="text-white">Neutral voice + Creative</strong> &mdash; good range of expression with fewer hallucinations than emotive voices</li>
+              <li>&bull; <strong className="text-white">Neutral voice + Natural</strong> &mdash; safest all-round choice</li>
+              <li>&bull; <strong className="text-white">Emotive voice + Robust</strong> &mdash; tames an expressive voice for consistent output</li>
+            </ul>
+          </section>
+
           {/* ═══ Delivery Control ═══ */}
           <section id="delivery" className="mb-14">
             <h2 className="mb-4 text-xl font-semibold text-white">Delivery Control</h2>
@@ -189,6 +243,98 @@ export default function DocsPage() {
               Tip: generate with cues, then re-generate without them if you prefer a subtler read.
               The cues &ldquo;prime&rdquo; the voice even when removed from surrounding text.
             </p>
+          </section>
+
+          {/* ═══ Break Times & Pauses ═══ */}
+          <section id="break-times" className="mb-14">
+            <h2 className="mb-4 text-xl font-semibold text-white">Break Times &amp; Pauses</h2>
+            <p className="mb-4 text-sm text-zinc-300">
+              Use the <strong className="text-white">Insert Pause</strong> buttons below the script area to add timed breaks,
+              or type them manually. The voice engine interprets these as natural pauses of varying length.
+            </p>
+            <div className="mb-6 overflow-hidden rounded-xl border border-zinc-800">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-zinc-800 bg-zinc-900/50"><th className="px-4 py-2.5 text-left font-medium text-zinc-400">Duration</th><th className="px-4 py-2.5 text-left font-medium text-zinc-400">What to Type</th><th className="px-4 py-2.5 text-left font-medium text-zinc-400">Use Case</th></tr></thead>
+                <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                  <tr><td className="px-4 py-2">~0.5s</td><td className="px-4 py-2"><Code>{`[pause]`}</Code></td><td className="px-4 py-2 text-zinc-400">Brief breath between clauses</td></tr>
+                  <tr><td className="px-4 py-2">~1.0s</td><td className="px-4 py-2"><Code>{`[long pause]`}</Code></td><td className="px-4 py-2 text-zinc-400">Between sentences or ideas</td></tr>
+                  <tr><td className="px-4 py-2">~1.5s</td><td className="px-4 py-2"><Code>...</Code></td><td className="px-4 py-2 text-zinc-400">Dramatic pause, building tension</td></tr>
+                  <tr><td className="px-4 py-2">~2.0s</td><td className="px-4 py-2"><Code>... ...</Code></td><td className="px-4 py-2 text-zinc-400">Scene transition, topic change</td></tr>
+                  <tr><td className="px-4 py-2">~3.0s</td><td className="px-4 py-2"><Code>... ... ...</Code></td><td className="px-4 py-2 text-zinc-400">Long break between sections</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Other Pause Techniques</h3>
+            <ul className="mb-4 space-y-1.5 text-sm text-zinc-300">
+              <li>&bull; <strong className="text-white">Comma</strong> <Code>,</Code> &mdash; brief, natural pause</li>
+              <li>&bull; <strong className="text-white">Period</strong> <Code>.</Code> &mdash; full sentence stop</li>
+              <li>&bull; <strong className="text-white">Dash</strong> <Code>&mdash;</Code> or <Code>--</Code> &mdash; abrupt thought break</li>
+              <li>&bull; <strong className="text-white">Line break</strong> &mdash; separates ideas with a breath</li>
+            </ul>
+
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Example: Using Pauses for Impact</h3>
+            <Pre>{`We don't just grow crops.
+
+[long pause]
+
+We grow FUTURES.
+
+... ...
+
+ProAgri -- where agriculture meets innovation.`}</Pre>
+          </section>
+
+          {/* ═══ Multi-Speaker Dialogue ═══ */}
+          <section id="multi-speaker" className="mb-14">
+            <h2 className="mb-4 text-xl font-semibold text-white">Multi-Speaker Dialogue</h2>
+            <p className="mb-4 text-sm text-zinc-300">
+              You can write dialogue-style scripts with speaker labels and stage directions.
+              The voice engine picks up on these cues to adjust timing, emotion, and delivery.
+              Generate each speaker&apos;s lines separately with different voices, then combine in your editor.
+            </p>
+
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Dialogue Format</h3>
+            <p className="mb-3 text-sm text-zinc-300">
+              Use <Code>{`[direction]`}</Code> tags inline to control how lines are delivered:
+            </p>
+            <Pre>{`Speaker 1: [starting to speak] So I was thinking we could—
+Speaker 2: [jumping in] —test our new timing features?
+Speaker 1: [surprised] Exactly! How did you—
+Speaker 2: [overlapping] —know what you were thinking? Lucky guess!
+Speaker 1: [pause] Sorry, go ahead.
+Speaker 2: [cautiously] Okay, so if we both try to talk at the same time—
+Speaker 1: [overlapping] —we'll probably crash the system!
+Speaker 2: [panicking] Wait, are we crashing? I can't tell if this is a feature or a—
+Speaker 1: [interrupting, then stopping abruptly] Bug! ...Did I just cut you off again?
+Speaker 2: [sighing] Yes, but honestly? This is kind of fun.
+Speaker 1: [mischievously] Race you to the next sentence!
+Speaker 2: [laughing] We're definitely going to break something!`}</Pre>
+
+            <h3 className="mt-6 mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">How to Produce Multi-Speaker Audio</h3>
+            <ol className="mb-4 space-y-2 text-sm text-zinc-300">
+              <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-xs font-bold text-violet-400">1</span><span>Write the full dialogue script with speaker labels</span></li>
+              <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-xs font-bold text-violet-400">2</span><span>Extract <strong className="text-white">Speaker 1&apos;s</strong> lines &mdash; paste into the agent, choose a voice (e.g. Liam), generate</span></li>
+              <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-xs font-bold text-violet-400">3</span><span>Extract <strong className="text-white">Speaker 2&apos;s</strong> lines &mdash; choose a different voice (e.g. Sarah), generate</span></li>
+              <li className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-xs font-bold text-violet-400">4</span><span>Combine the audio files in an editor, overlapping where marked</span></li>
+            </ol>
+
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Direction Tags That Work Well</h3>
+            <div className="overflow-hidden rounded-xl border border-zinc-800">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-zinc-800 bg-zinc-900/50"><th className="px-4 py-2.5 text-left font-medium text-zinc-400">Tag</th><th className="px-4 py-2.5 text-left font-medium text-zinc-400">Effect</th></tr></thead>
+                <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                  <tr><td className="px-4 py-2"><Code>{`[starting to speak]`}</Code></td><td className="px-4 py-2 text-zinc-400">Gradual onset, natural beginning</td></tr>
+                  <tr><td className="px-4 py-2"><Code>{`[jumping in]`}</Code></td><td className="px-4 py-2 text-zinc-400">Quick, eager interruption</td></tr>
+                  <tr><td className="px-4 py-2"><Code>{`[surprised]`}</Code></td><td className="px-4 py-2 text-zinc-400">Raised pitch, taken aback</td></tr>
+                  <tr><td className="px-4 py-2"><Code>{`[cautiously]`}</Code></td><td className="px-4 py-2 text-zinc-400">Careful, measured delivery</td></tr>
+                  <tr><td className="px-4 py-2"><Code>{`[overlapping]`}</Code></td><td className="px-4 py-2 text-zinc-400">Rushed, talking over someone</td></tr>
+                  <tr><td className="px-4 py-2"><Code>{`[panicking]`}</Code></td><td className="px-4 py-2 text-zinc-400">Fast, stressed delivery</td></tr>
+                  <tr><td className="px-4 py-2"><Code>{`[interrupting, then stopping abruptly]`}</Code></td><td className="px-4 py-2 text-zinc-400">Sharp cut, sudden silence</td></tr>
+                  <tr><td className="px-4 py-2"><Code>{`[pause]`}</Code></td><td className="px-4 py-2 text-zinc-400">Brief silence before continuing</td></tr>
+                </tbody>
+              </table>
+            </div>
           </section>
 
           {/* ═══ Pronunciation (CMU) ═══ */}

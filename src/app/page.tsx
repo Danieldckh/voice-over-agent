@@ -13,6 +13,20 @@ const VOICES = [
   { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', desc: 'Deep & Confident, Australian Male' },
 ] as const;
 
+const STABILITY_PRESETS = [
+  { id: 'creative', label: 'Creative', value: 0.20, desc: 'Expressive & emotional' },
+  { id: 'natural', label: 'Natural', value: 0.35, desc: 'Balanced & neutral' },
+  { id: 'robust', label: 'Robust', value: 0.75, desc: 'Stable & consistent' },
+] as const;
+
+const BREAK_TIMES = [
+  { label: '0.5s', tag: '[pause]' },
+  { label: '1.0s', tag: '[long pause]' },
+  { label: '1.5s', tag: '...' },
+  { label: '2.0s', tag: '... ...' },
+  { label: '3.0s', tag: '... ... ...' },
+] as const;
+
 const AUDIO_TAGS = {
   'Emotions': [
     '[excited]', '[sarcastic]', '[curious]', '[crying]', '[mischievously]',
@@ -33,6 +47,7 @@ export default function Home() {
   const [scriptText, setScriptText] = useState('');
   const [voiceId, setVoiceId] = useState<string>(VOICES[0].id);
   const [speed, setSpeed] = useState<number>(1.1);
+  const [stability, setStability] = useState<string>('natural');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTags, setShowTags] = useState(false);
@@ -82,7 +97,7 @@ export default function Home() {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: trimmed, voiceId, speed }),
+        body: JSON.stringify({ text: trimmed, voiceId, speed, stability }),
       });
 
       if (!response.ok) {
@@ -108,7 +123,7 @@ export default function Home() {
     } finally {
       setIsGenerating(false);
     }
-  }, [scriptText, voiceId]);
+  }, [scriptText, voiceId, speed, stability]);
 
   const insertTag = useCallback((tag: string) => {
     const textarea = textareaRef.current;
@@ -216,6 +231,29 @@ export default function Home() {
             ))}
           </div>
 
+          {/* Stability preset */}
+          <label className="mb-2 block text-sm font-medium text-zinc-300">
+            Stability
+          </label>
+          <div className="mb-5 flex gap-2">
+            {STABILITY_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setStability(p.id)}
+                disabled={isGenerating}
+                className={`flex-1 rounded-lg border px-2 py-2 text-center transition-colors disabled:opacity-50 ${
+                  stability === p.id
+                    ? 'border-violet-500 bg-violet-500/20'
+                    : 'border-zinc-700 bg-zinc-800/80 hover:border-zinc-600'
+                }`}
+              >
+                <span className={`block text-xs font-medium ${stability === p.id ? 'text-violet-300' : 'text-zinc-300'}`}>{p.label}</span>
+                <span className="block text-[10px] text-zinc-500 mt-0.5">{p.desc}</span>
+              </button>
+            ))}
+          </div>
+
           {/* Script input area */}
           <label
             htmlFor="script"
@@ -275,6 +313,24 @@ export default function Home() {
               </div>
             ))}
           </div>}
+          </div>
+
+          {/* Break Time inserter */}
+          <div className="mt-3">
+            <p className="mb-2 text-xs font-medium text-zinc-400">Insert Pause</p>
+            <div className="flex flex-wrap gap-1.5">
+              {BREAK_TIMES.map((b) => (
+                <button
+                  key={b.label}
+                  type="button"
+                  onClick={() => insertTag(b.tag)}
+                  disabled={isGenerating}
+                  className="rounded-md border border-zinc-700 bg-zinc-800/60 px-3 py-1 text-[11px] font-mono text-zinc-300 transition-all hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-300 disabled:opacity-50"
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Controls row */}
