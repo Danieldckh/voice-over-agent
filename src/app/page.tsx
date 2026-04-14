@@ -32,6 +32,7 @@ const AUDIO_TAGS = {
 export default function Home() {
   const [scriptText, setScriptText] = useState('');
   const [voiceId, setVoiceId] = useState<string>(VOICES[0].id);
+  const [speed, setSpeed] = useState<number>(1.1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTags, setShowTags] = useState(false);
@@ -81,7 +82,7 @@ export default function Home() {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: trimmed, voiceId }),
+        body: JSON.stringify({ text: trimmed, voiceId, speed }),
       });
 
       if (!response.ok) {
@@ -155,6 +156,15 @@ export default function Home() {
           Paste your script or upload a text file, then generate a professional
           voice-over.
         </p>
+        <a
+          href="/docs"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-300"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+            <path fillRule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z" clipRule="evenodd" />
+          </svg>
+          Usage Guide
+        </a>
       </header>
 
       {/* Main card */}
@@ -180,6 +190,31 @@ export default function Home() {
               </option>
             ))}
           </select>
+
+          {/* Speed selector */}
+          <label
+            htmlFor="speed"
+            className="mb-2 block text-sm font-medium text-zinc-300"
+          >
+            Speed
+          </label>
+          <div className="mb-5 flex gap-2">
+            {([0.75, 0.9, 1.0, 1.1, 1.25, 1.5] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSpeed(s)}
+                disabled={isGenerating}
+                className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                  speed === s
+                    ? 'border-violet-500 bg-violet-500/20 text-violet-300'
+                    : 'border-zinc-700 bg-zinc-800/80 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200'
+                }`}
+              >
+                {s === 1.0 ? '1.0×' : `${s}×`}
+              </button>
+            ))}
+          </div>
 
           {/* Script input area */}
           <label
