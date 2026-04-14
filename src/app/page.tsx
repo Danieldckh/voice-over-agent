@@ -51,14 +51,24 @@ function escapeHtml(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function buildPronRegex(pronMap: Map<string, string>): RegExp | null {
+  if (pronMap.size === 0) return null;
+  // Sort longest first so "Pro Agri" matches before "Pro"
+  const keys = Array.from(pronMap.keys()).sort((a, b) => b.length - a.length);
+  const escaped = keys.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(`(${escaped.join('|')})`, 'gi');
+}
+
 function buildHighlightHtml(text: string, pronMap: Map<string, string>): string {
-  if (pronMap.size === 0) return escapeHtml(text) + '\n';
-  const words = Array.from(pronMap.keys()).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const regex = new RegExp(`\\b(${words.join('|')})\\b`, 'gi');
+  const regex = buildPronRegex(pronMap);
+  if (!regex) return escapeHtml(text) + '\n';
   let result = '';
   let last = 0;
   let match;
   while ((match = regex.exec(text)) !== null) {
+    // Verify this is actually a key in the map (case-insensitive)
+    const key = Array.from(pronMap.keys()).find(k => k.toLowerCase() === match![0].toLowerCase());
+    if (!key) continue;
     result += escapeHtml(text.slice(last, match.index));
     result += `<mark class="pron-mark">${escapeHtml(match[0])}</mark>`;
     last = match.index + match[0].length;
@@ -68,12 +78,13 @@ function buildHighlightHtml(text: string, pronMap: Map<string, string>): string 
 }
 
 function injectPhonemes(text: string, pronMap: Map<string, string>): string {
-  if (pronMap.size === 0) return text;
-  const words = Array.from(pronMap.keys()).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const regex = new RegExp(`\\b(${words.join('|')})\\b`, 'gi');
+  const regex = buildPronRegex(pronMap);
+  if (!regex) return text;
   return text.replace(regex, (m) => {
-    const ph = pronMap.get(m) || pronMap.get(m.toLowerCase());
-    return ph ? `<phoneme alphabet="cmu-arpabet" ph="${ph}">${m}</phoneme>` : m;
+    const key = Array.from(pronMap.keys()).find(k => k.toLowerCase() === m.toLowerCase());
+    if (!key) return m;
+    const ph = pronMap.get(key)!;
+    return `<phoneme alphabet="cmu-arpabet" ph="${ph}">${m}</phoneme>`;
   });
 }
 
@@ -164,7 +175,7 @@ export default function Home() {
     } finally {
       setIsGenerating(false);
     }
-  }, [scriptText, voiceId, speed, stability]);
+  }, [scriptText, voiceId, speed, stability, pronMap]);
 
   const insertTag = useCallback((tag: string) => {
     const textarea = textareaRef.current;
