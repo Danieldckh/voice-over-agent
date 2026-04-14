@@ -40,12 +40,17 @@ export async function POST(req: NextRequest) {
       finalText = `<speak>${finalText}</speak>`;
     }
 
-    // Build voice settings — omit `style` for Flash v2
+    // Build voice settings — omit `style` for Flash v2, clamp speed to its 0.7–1.2 range
+    let effectiveSpeed = typeof speed === "number" && speed > 0 ? speed : 1.1;
+    if (hasPhonemes) {
+      effectiveSpeed = Math.max(0.7, Math.min(1.2, effectiveSpeed));
+    }
+
     const voiceSettings: Record<string, number | boolean> = {
       stability: stabilityValue,
       similarity_boost: 0.80,
       use_speaker_boost: true,
-      speed: typeof speed === "number" && speed > 0 ? speed : 1.1,
+      speed: effectiveSpeed,
     };
     if (!hasPhonemes) {
       voiceSettings.style = stabilityPreset === "robust" ? 0.10 : 0.40;
