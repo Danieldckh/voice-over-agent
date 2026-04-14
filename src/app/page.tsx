@@ -345,10 +345,10 @@ export default function Home() {
           >
             Script
           </label>
-          <div className="script-container relative">
+          <div className="script-container">
             <div
               ref={backdropRef}
-              className="script-backdrop pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words rounded-xl border border-transparent px-4 py-3 text-sm leading-relaxed text-transparent"
+              className="script-backdrop pointer-events-none absolute inset-0 rounded-xl text-transparent"
               aria-hidden="true"
               dangerouslySetInnerHTML={{ __html: buildHighlightHtml(scriptText, pronMap) }}
             />
@@ -364,7 +364,7 @@ export default function Home() {
               }}
               onScroll={handleSyncScroll}
               disabled={isGenerating}
-              className="script-textarea relative w-full resize-y rounded-xl border border-zinc-700 bg-transparent px-4 py-3 text-sm leading-relaxed text-zinc-100 placeholder-zinc-500 transition-colors focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
+              className="script-textarea w-full resize-y rounded-xl border-zinc-700 text-zinc-100 transition-colors focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50"
             />
           </div>
 
