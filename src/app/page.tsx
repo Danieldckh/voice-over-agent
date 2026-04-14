@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 
 const VOICES = [
   { id: 'ZIGffU92feoE7QFrof7N', name: 'Liam Callahan', desc: 'Narrative, American Male' },
@@ -43,6 +43,26 @@ const AUDIO_TAGS = {
   ],
 } as const;
 
+const CMU_CONSONANTS = ['B','CH','D','DH','F','G','HH','JH','K','L','M','N','NG','P','R','S','SH','T','TH','V','W','Y','Z','ZH'];
+const CMU_VOWELS = ['AA','AE','AH','AO','AW','AY','EH','ER','EY','IH','IY','OW','OY','UH','UW'];
+const CMU_STRESS = ['0','1','2'];
+
+interface Pronunciation {
+  word: string;
+  phonemes: string;
+  fullMatch: string;
+}
+
+function parsePronunciations(text: string): Pronunciation[] {
+  const regex = /<phoneme\s+alphabet="cmu-arpabet"\s+ph="([^"]*)">(.*?)<\/phoneme>/g;
+  const results: Pronunciation[] = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    results.push({ word: match[2], phonemes: match[1], fullMatch: match[0] });
+  }
+  return results;
+}
+
 export default function Home() {
   const [scriptText, setScriptText] = useState('');
   const [voiceId, setVoiceId] = useState<string>(VOICES[0].id);
@@ -51,8 +71,15 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTags, setShowTags] = useState(false);
+  const [showPronunciationModal, setShowPronunciationModal] = useState(false);
+  const [pronSelectedWord, setPronSelectedWord] = useState('');
+  const [pronPhonemes, setPronPhonemes] = useState('');
+  const [pronSelectionRange, setPronSelectionRange] = useState<[number, number]>([0, 0]);
+  const [pronError, setPronError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const pronunciations = useMemo(() => parsePronunciations(scriptText), [scriptText]);
 
   const handleFileUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,6 +171,36 @@ export default function Home() {
       textarea.setSelectionRange(pos, pos);
     });
   }, [scriptText]);
+
+  const handleOpenPronunciation = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (start === end) {
+      setPronError('Select a word first');
+      setTimeout(() => setPronError(null), 2000);
+      return;
+    }
+    const selected = scriptText.slice(start, end).trim();
+    setPronSelectedWord(selected);
+    setPronPhonemes('');
+    setPronSelectionRange([start, end]);
+    setShowPronunciationModal(true);
+  }, [scriptText]);
+
+  const handleApplyPronunciation = useCallback(() => {
+    if (!pronPhonemes.trim()) return;
+    const [start, end] = pronSelectionRange;
+    const tag = `<phoneme alphabet="cmu-arpabet" ph="${pronPhonemes.trim()}">${pronSelectedWord}</phoneme>`;
+    const newText = scriptText.slice(0, start) + tag + scriptText.slice(end);
+    setScriptText(newText);
+    setShowPronunciationModal(false);
+  }, [pronPhonemes, pronSelectedWord, pronSelectionRange, scriptText]);
+
+  const handleRemovePronunciation = useCallback((pron: Pronunciation) => {
+    setScriptText((prev) => prev.replace(pron.fullMatch, pron.word));
+  }, []);
 
   const charCount = scriptText.length;
 
@@ -333,6 +390,24 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Set Pronunciation */}
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleOpenPronunciation}
+              disabled={isGenerating}
+              className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-800/60 px-3 py-1 text-[11px] font-medium text-zinc-300 transition-all hover:border-violet-500/50 hover:bg-violet-500/10 hover:text-violet-300 disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+                <path fillRule="evenodd" d="M2.5 3A1.5 1.5 0 001 4.5v4A1.5 1.5 0 002.5 10h1.06a.5.5 0 01.354.147l2.94 2.94A.5.5 0 007.707 12.5V2.5a.5.5 0 00-.854-.354l-2.94 2.94A.5.5 0 013.56 5.5H2.5zM12.95 4.05a.75.75 0 00-1.06 1.06 3.5 3.5 0 010 4.95.75.75 0 001.06 1.06 5 5 0 000-7.07z" clipRule="evenodd" />
+              </svg>
+              Set Pronunciation
+            </button>
+            {pronError && (
+              <span className="text-[11px] text-red-400">{pronError}</span>
+            )}
+          </div>
+
           {/* Controls row */}
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -401,6 +476,32 @@ export default function Home() {
             </div>
           )}
 
+          {/* Pronunciation overrides list */}
+          {pronunciations.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-zinc-400">Pronunciation Overrides</p>
+              <div className="space-y-1.5">
+                {pronunciations.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-md border border-zinc-700/50 bg-zinc-800/40 px-3 py-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-zinc-200">{p.word}</span>
+                      <span className="font-mono text-[11px] text-violet-400">{p.phonemes}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePronunciation(p)}
+                      className="text-zinc-500 transition-colors hover:text-red-400"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.75 9.25a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Generate button */}
           <button
             type="button"
@@ -463,6 +564,69 @@ export default function Home() {
         )}
       </main>
 
+      {/* Pronunciation Modal */}
+      {showPronunciationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowPronunciationModal(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-1 text-sm font-semibold text-zinc-100">Set Pronunciation</h3>
+            <p className="mb-4 text-xs text-zinc-500">
+              Define CMU Arpabet phonemes for <span className="font-medium text-zinc-300">&ldquo;{pronSelectedWord}&rdquo;</span>
+            </p>
+
+            <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-500">Phonemes</label>
+            <input
+              type="text"
+              value={pronPhonemes}
+              onChange={(e) => setPronPhonemes(e.target.value)}
+              placeholder="e.g. P R OW1 AE1 G R IY0"
+              className="mb-4 w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-3 py-2 font-mono text-sm text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter') handleApplyPronunciation(); }}
+            />
+
+            <div className="mb-2">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Consonants</p>
+              <div className="flex flex-wrap gap-1">
+                {CMU_CONSONANTS.map((c) => (
+                  <button key={c} type="button" onClick={() => setPronPhonemes((p) => (p ? p + ' ' + c : c))}
+                    className="rounded border border-zinc-700 bg-zinc-800/60 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 transition-colors hover:border-violet-500/50 hover:text-violet-300"
+                  >{c}</button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-2">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Vowels</p>
+              <div className="flex flex-wrap gap-1">
+                {CMU_VOWELS.map((v) => (
+                  <button key={v} type="button" onClick={() => setPronPhonemes((p) => (p ? p + ' ' + v : v))}
+                    className="rounded border border-zinc-700 bg-zinc-800/60 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 transition-colors hover:border-violet-500/50 hover:text-violet-300"
+                  >{v}</button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-5">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Stress</p>
+              <div className="flex flex-wrap gap-1">
+                {CMU_STRESS.map((s) => (
+                  <button key={s} type="button" onClick={() => setPronPhonemes((p) => p + s)}
+                    className="rounded border border-zinc-700 bg-zinc-800/60 px-2 py-0.5 font-mono text-[10px] text-zinc-400 transition-colors hover:border-violet-500/50 hover:text-violet-300"
+                  >{s} {s === '0' ? '(none)' : s === '1' ? '(primary)' : '(secondary)'}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setShowPronunciationModal(false)}
+                className="rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:text-zinc-200"
+              >Cancel</button>
+              <button type="button" onClick={handleApplyPronunciation}
+                disabled={!pronPhonemes.trim()}
+                className="rounded-lg bg-violet-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+              >Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

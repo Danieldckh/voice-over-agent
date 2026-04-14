@@ -30,6 +30,27 @@ export async function POST(req: NextRequest) {
     const selectedVoice = voiceId || "ZIGffU92feoE7QFrof7N";
     const url = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(selectedVoice)}?output_format=mp3_44100_128`;
 
+    // Detect phoneme tags to decide model and text format
+    const hasPhonemes = /<phoneme\s/.test(text);
+    const modelId = hasPhonemes ? "eleven_flash_v2" : "eleven_v3";
+
+    // Wrap in <speak> tags for SSML when phoneme tags are present
+    let finalText = text.trim();
+    if (hasPhonemes && !finalText.startsWith("<speak>")) {
+      finalText = `<speak>${finalText}</speak>`;
+    }
+
+    // Build voice settings — omit `style` for Flash v2
+    const voiceSettings: Record<string, number | boolean> = {
+      stability: stabilityValue,
+      similarity_boost: 0.80,
+      use_speaker_boost: true,
+      speed: typeof speed === "number" && speed > 0 ? speed : 1.1,
+    };
+    if (!hasPhonemes) {
+      voiceSettings.style = stabilityPreset === "robust" ? 0.10 : 0.40;
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -37,15 +58,9 @@ export async function POST(req: NextRequest) {
         "xi-api-key": apiKey,
       },
       body: JSON.stringify({
-        text: text.trim(),
-        model_id: "eleven_v3",
-        voice_settings: {
-          stability: stabilityValue,
-          similarity_boost: 0.80,
-          style: stabilityPreset === "robust" ? 0.10 : 0.40,
-          use_speaker_boost: true,
-          speed: typeof speed === "number" && speed > 0 ? speed : 1.1,
-        },
+        text: finalText,
+        model_id: modelId,
+        voice_settings: voiceSettings,
       }),
     });
 
@@ -65,6 +80,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "audio/mpeg",
         "Content-Disposition": 'attachment; filename="voiceover.mp3"',
+        "X-Model-Used": modelId,
       },
     });
   } catch (error) {
